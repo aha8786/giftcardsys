@@ -20,7 +20,7 @@ LABEL_BARCODE = "바코드"
 BTN_CHARGE = "충전"
 BTN_PAY = "결제"
 BTN_MEMBER_INFO = "회원정보"
-TX_TABLE_HEADERS = ["번호", "카드 ID", "금액", "거래 후 잔액", "일시"]
+TX_TABLE_HEADERS = ["번호", "구분", "카드 ID", "금액", "거래 후 잔액", "일시"]
 
 # Card register dialog
 REGISTER_TITLE = "신규 카드 등록"
@@ -40,7 +40,7 @@ BTN_CANCEL = "취소"
 MEMBER_SEARCH_TITLE = "회원 정보"
 MEMBER_SEARCH_PLACEHOLDER = "번호 또는 회원정보 입력"
 MEMBER_BTN_SEARCH = "조회"
-MEMBER_LIST_HEADERS = ["전화번호", "바코드", "잔액", "등록일"]
+MEMBER_LIST_HEADERS = ["전화번호", "바코드", "잔액", "등록일", ""]
 MEMBER_NO_RESULT = "검색 결과가 없습니다."
 
 # Member edit dialog
@@ -64,5 +64,5 @@ ADMIN_END = "종료일"
 ADMIN_BTN_SEARCH = "조회"
 ADMIN_TOTAL_CHARGED = "총 충전 금액"
 ADMIN_TOTAL_USED = "총 사용 금액"
-ADMIN_TOTAL_BALANCE = "전체 잔액 합계"
+ADMIN_TOTAL_BALANCE = "미사용 금액"
 MEMBER_PHONE_LABEL = "전화번호"

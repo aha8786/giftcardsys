@@ -3,11 +3,11 @@ from datetime import date
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QLineEdit, QPushButton, QLabel,
-    QTableWidget, QTableWidgetItem, QMessageBox, QDateEdit,
+    QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QDateEdit,
     QFrame, QSizePolicy,
 )
 from PySide6.QtCore import Qt, QDate, QSize
-from PySide6.QtGui import QBrush, QColor, QFont, QPixmap, QIcon
+from PySide6.QtGui import QFont, QPixmap, QIcon
 
 from src.ui import messages as M
 from src.ui import theme
@@ -265,7 +265,10 @@ class MainWindow(QMainWindow):
 
         self._table = QTableWidget(0, len(M.MAIN_LIST_HEADERS))
         self._table.setHorizontalHeaderLabels(M.MAIN_LIST_HEADERS)
-        self._table.horizontalHeader().setStretchLastSection(True)
+        hdr = self._table.horizontalHeader()
+        hdr.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        for col in (0, 1, 2, 6):  # 번호·구분·카드ID·일시는 내용 너비에 맞게
+            hdr.setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
         self._table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self._table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self._table.setAlternatingRowColors(False)
@@ -281,8 +284,6 @@ class MainWindow(QMainWindow):
             QTableWidget::item {{
                 padding: 11px 14px;
                 border: none;
-                color: {theme.BODY};
-                background-color: transparent;
             }}
             QTableWidget::item:selected {{
                 background-color: {theme.PRIMARY_LIGHT};
@@ -338,18 +339,16 @@ class MainWindow(QMainWindow):
 
         for r, tx in enumerate(rows):
             tx_type = tx["type"]
-            row_color = QColor(theme.CHARGE_BG) if tx_type == "충전" else QColor(theme.PAY_BG)
             values = [
-                tx["id"], tx["card_id"], tx["phone_number"],
+                tx["id"], theme.tx_label(tx_type), tx["card_id"], tx["phone_number"],
                 f"{tx['amount']:,}", f"{tx['balance_after']:,}", tx["created_at"],
                 tx["barcode"],
             ]
             for c, val in enumerate(values):
                 item = QTableWidgetItem(str(val))
                 item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                item.setBackground(QBrush(row_color))
+                theme.style_tx_item(item, tx_type)
                 self._table.setItem(r, c, item)
-        self._table.resizeColumnsToContents()
 
     def _on_open_member_search(self):
         from src.ui.member_search import MemberSearchPanel

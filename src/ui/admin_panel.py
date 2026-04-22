@@ -1,10 +1,10 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QDateEdit, QPushButton, QTableWidget, QTableWidgetItem,
+    QDateEdit, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView,
     QFrame,
 )
 from PySide6.QtCore import QDate, Qt
-from PySide6.QtGui import QBrush, QColor, QFont
+from PySide6.QtGui import QFont
 
 from src.ui import messages as M
 from src.ui import theme
@@ -96,8 +96,18 @@ class AdminPanel(QWidget):
         filter_row.addWidget(self._end)
 
         btn_search = QPushButton(M.ADMIN_BTN_SEARCH)
-        btn_search.setProperty("role", "primary")
         btn_search.setFixedSize(80, 36)
+        btn_search.setStyleSheet("""
+            QPushButton {
+                background-color: #0a0a0a;
+                color: #ffffff;
+                border: none;
+                border-radius: 999px;
+                font-weight: 700;
+            }
+            QPushButton:hover  { background-color: #222222; }
+            QPushButton:pressed { background-color: #000000; }
+        """)
         btn_search.clicked.connect(self._on_search)
         filter_row.addWidget(btn_search)
         filter_row.addStretch()
@@ -169,7 +179,10 @@ class AdminPanel(QWidget):
 
         self._table = QTableWidget(0, len(M.TX_TABLE_HEADERS))
         self._table.setHorizontalHeaderLabels(M.TX_TABLE_HEADERS)
-        self._table.horizontalHeader().setStretchLastSection(True)
+        hdr = self._table.horizontalHeader()
+        hdr.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        for col in (0, 1, 2, 5):  # 번호·구분·카드ID·일시는 내용 너비에 맞게
+            hdr.setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
         self._table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self._table.setAlternatingRowColors(False)
         self._table.verticalHeader().setVisible(False)
@@ -178,7 +191,7 @@ class AdminPanel(QWidget):
         self._table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self._table.setStyleSheet(f"""
             QTableWidget {{ border: none; border-bottom-left-radius: 14px; border-bottom-right-radius: 14px; }}
-            QTableWidget::item {{ padding: 11px 14px; border: none; color: {theme.BODY}; background-color: transparent; }}
+            QTableWidget::item {{ padding: 11px 14px; border: none; }}
             QTableWidget::item:selected {{ background-color: {theme.PRIMARY_LIGHT}; color: {theme.BRIGHT}; }}
         """)
         table_outer.addWidget(self._table)
@@ -236,13 +249,11 @@ class AdminPanel(QWidget):
         self._table.setRowCount(len(txs))
         for row, tx in enumerate(txs):
             tx_type = tx["type"]
-            row_color = QColor(theme.CHARGE_BG) if tx_type == "충전" else QColor(theme.PAY_BG)
             for col, val in enumerate([
-                tx["id"], tx["card_id"],
+                tx["id"], theme.tx_label(tx["type"]), tx["card_id"],
                 f"{tx['amount']:,}", f"{tx['balance_after']:,}", tx["created_at"],
             ]):
                 item = QTableWidgetItem(str(val))
                 item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                item.setBackground(QBrush(row_color))
+                theme.style_tx_item(item, tx_type)
                 self._table.setItem(row, col, item)
-        self._table.resizeColumnsToContents()

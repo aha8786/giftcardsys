@@ -1,12 +1,20 @@
 block_cipher = None
 
-
 a = Analysis(
     ["main.py"],
     pathex=[],
     binaries=[],
-    datas=[("img", "img")],
-    hiddenimports=[],
+    datas=[
+        ("img", "img"),
+        ("config", "config"),
+    ],
+    hiddenimports=[
+        "PySide6.QtCore",
+        "PySide6.QtGui",
+        "PySide6.QtWidgets",
+        "PySide6.QtSvg",
+        "PySide6.QtXml",
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -29,6 +37,7 @@ exe = EXE(
     strip=False,
     upx=True,
     console=False,
+    icon="img/logo1.ico",
 )
 
 coll = COLLECT(
@@ -40,11 +49,4 @@ coll = COLLECT(
     upx=True,
     upx_exclude=[],
     name="GiftCardSys",
-)
-
-app = BUNDLE(
-    coll,
-    name="GiftCardSys.app",
-    icon=None,
-    bundle_identifier="com.giftcardsys.app",
 )

@@ -2,9 +2,8 @@
 Craftwork-inspired Clean UI — PySide6
 Light gray background · White card surfaces · Lime-green primary
 """
-from PySide6.QtWidgets import QGraphicsDropShadowEffect, QHBoxLayout, QLabel, QWidget
-from PySide6.QtGui import QColor
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QGraphicsDropShadowEffect, QTableWidgetItem
+from PySide6.QtGui import QBrush, QColor
 
 # ── Palette ──────────────────────────────────────────────────────────────────
 BASE         = "#ebebeb"   # 밝은 회색 — 창 배경
@@ -76,31 +75,23 @@ def card_shadow(blur: int = 20, y: int = 4, opacity: float = 0.07):
     return fx
 
 
-def make_badge(text: str) -> QWidget:
-    display = "결제" if text == "사용" else text
-    badge = QLabel(display)
-    badge.setObjectName("txBadge")
-    badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    fg, bg = (CHARGE_FG, CHARGE_BG) if text == "충전" else (PAY_FG, PAY_BG)
-    badge.setStyleSheet(f"""
-        QLabel#txBadge {{
-            background-color: {bg};
-            color: {fg};
-            border-radius: 10px;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 3px 10px;
-        }}
-    """)
+def tx_label(tx_type: str) -> str:
+    """거래 type을 사용자 표시용 라벨로 변환 ('사용' → '결제')."""
+    return "결제" if tx_type == "사용" else tx_type
 
-    container = QWidget()
-    container.setStyleSheet("background: transparent;")
-    layout = QHBoxLayout(container)
-    layout.setContentsMargins(4, 2, 4, 2)
-    layout.addStretch()
-    layout.addWidget(badge)
-    layout.addStretch()
-    return container
+
+def tx_row_colors(tx_type: str) -> tuple:
+    """거래 type에 따른 (배경색, 글자색) 문자열 반환."""
+    if tx_type == "충전":
+        return CHARGE_BG, CHARGE_FG
+    return PAY_BG, PAY_FG
+
+
+def style_tx_item(item: QTableWidgetItem, tx_type: str) -> None:
+    """거래내역 테이블 셀에 type별 배경/글자 색상을 일괄 적용."""
+    bg, fg = tx_row_colors(tx_type)
+    item.setBackground(QBrush(QColor(bg)))
+    item.setForeground(QBrush(QColor(fg)))
 
 
 # ── Stylesheet ────────────────────────────────────────────────────────────────
@@ -336,8 +327,6 @@ QTableWidget {{
 QTableWidget::item {{
     padding: 11px 14px;
     border: none;
-    color: {BODY};
-    background-color: transparent;
 }}
 QTableWidget::item:selected {{
     background-color: {PRIMARY_LIGHT};

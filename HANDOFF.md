@@ -280,3 +280,39 @@ GitHub의 `uxjoseph/supanova-design-skill`에서 설계 원칙을 추출하여 P
 ### 다음 작업 시 참고사항
 - 원격 저장소 푸시는 사용자 GitHub 인증 상태(SSH 키 또는 토큰)에 따라 성공/실패가 갈릴 수 있다.
 - 현재 설정으로 소스 코드 중심 커밋이 가능하며 로컬 환경 파일은 자동 제외된다.
+
+## [2026-04-21] 회원정보 화면 충전/결제 버튼 잘림 수정
+
+### 작업 내용
+- 회원 검색(회원정보) 테이블의 액션 컬럼 폭이 좁아 충전/결제 버튼이 일부 환경에서 잘리는 문제를 수정했다.
+- 액션 컬럼 고정 너비를 `110`에서 `132`로 확대했다.
+- 셀 위젯 좌우 여백을 축소하고 버튼 폭을 소폭 확장해 아이콘/버튼 표시 안정성을 높였다.
+
+### 변경된 파일
+- `src/ui/member_search.py` — 액션 컬럼 폭 및 버튼 셀 레이아웃 조정
+
+### 다음 작업 시 참고사항
+- 고해상도/배율 환경에서도 액션 컬럼은 130px 이상 유지하는 것을 권장한다.
+
+---
+
+## [2026-04-22] Windows EXE 빌드 설정 (PyInstaller + 아이콘)
+
+### 작업 내용
+- `img/logo1.png`를 아이콘으로 사용하는 Windows EXE 빌드 파이프라인을 정비했다.
+- PyInstaller는 Windows 아이콘으로 `.ico` 형식이 필요하므로 빌드 시 Pillow로 자동 변환한다.
+- `build_release.py`가 플랫폼 감지 후 PNG → ICO/PNG 변환 및 `--icon` 옵션을 자동 처리한다.
+
+### 변경된 파일
+- `requirements.txt` — Pillow>=10.0.0 추가 (PNG→ICO 변환)
+- `scripts/build_release.py` — 아이콘 변환 로직, `--icon` 옵션, `config` 디렉토리 번들, PySide6 hidden imports 추가
+- `giftcardsys.spec` — Windows 기준으로 재작성 (아이콘, hidden imports, config 포함)
+- `.github/workflows/build-cross-platform.yml` — Pillow 설치 추가
+- `build_windows.bat` — Windows 사용자용 원클릭 빌드 스크립트 신규 생성
+
+### 다음 작업 시 참고사항
+- PyInstaller는 크로스 컴파일 불가 — `.exe`는 반드시 Windows 환경에서 빌드해야 한다.
+- GitHub Actions 워크플로(`build-cross-platform.yml`)를 트리거하면 자동으로 Windows EXE ZIP이 아티팩트로 생성된다.
+- Windows에서 직접 빌드하려면 `build_windows.bat`을 더블클릭하면 된다.
+- `img/logo1.ico`는 빌드 시 자동 생성되므로 직접 만들 필요 없다.
+- `.spec` 파일을 직접 사용할 경우 먼저 `python scripts/build_release.py`로 `logo1.ico`를 생성해야 한다.

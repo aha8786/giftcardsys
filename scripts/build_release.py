@@ -12,6 +12,9 @@ ROOT = Path(__file__).resolve().parent.parent
 DIST_DIR = ROOT / "dist"
 BUILD_DIR = ROOT / "build"
 PYI_CONFIG_DIR = ROOT / ".pyinstaller"
+ICON_PNG = ROOT / "img" / "logo1.png"
+ICON_ICO = ROOT / "img" / "logo1.ico"
+ICON_ICNS = ROOT / "img" / "logo1.icns"
 
 
 def run(cmd: list[str]) -> None:
@@ -25,22 +28,64 @@ def clean() -> None:
     PYI_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def convert_icon(system: str) -> Path | None:
+    if not ICON_PNG.exists():
+        print(f"아이콘 파일 없음: {ICON_PNG} — 아이콘 없이 빌드합니다.")
+        return None
+
+    try:
+        from PIL import Image
+    except ImportError:
+        print("Pillow 미설치 — 아이콘 없이 빌드합니다. (pip install Pillow)")
+        return None
+
+    img = Image.open(ICON_PNG).convert("RGBA")
+
+    if system == "windows":
+        sizes = [(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)]
+        img.save(ICON_ICO, format="ICO", sizes=sizes)
+        print(f"아이콘 변환 완료: {ICON_ICO}")
+        return ICON_ICO
+
+    if system == "darwin":
+        # PyInstaller는 macOS에서 PNG도 허용
+        print(f"macOS 빌드 — PNG 아이콘 사용: {ICON_PNG}")
+        return ICON_PNG
+
+    return None
+
+
 def pyinstaller_build() -> None:
     system = platform.system().lower()
     data_sep = ";" if system == "windows" else ":"
     os.environ["PYINSTALLER_CONFIG_DIR"] = str(PYI_CONFIG_DIR)
+
+    icon_path = convert_icon(system)
 
     cmd = [
         "pyinstaller",
         "--noconfirm",
         "--clean",
         "--windowed",
-        "--name",
-        APP_NAME,
-        "--add-data",
-        f"img{data_sep}img",
-        "main.py",
+        "--name", APP_NAME,
+        "--add-data", f"img{data_sep}img",
+        "--add-data", f"config{data_sep}config",
     ]
+
+    if icon_path:
+        cmd += ["--icon", str(icon_path)]
+
+    # PySide6 필수 hidden imports
+    for mod in [
+        "PySide6.QtCore",
+        "PySide6.QtGui",
+        "PySide6.QtWidgets",
+        "PySide6.QtSvg",
+        "PySide6.QtXml",
+    ]:
+        cmd += ["--hidden-import", mod]
+
+    cmd.append("main.py")
     run(cmd)
 
 
@@ -65,20 +110,13 @@ def package_output() -> None:
         app_link.symlink_to("/Applications")
 
         try:
-            run(
-                [
-                    "hdiutil",
-                    "create",
-                    "-volname",
-                    APP_NAME,
-                    "-srcfolder",
-                    str(dmg_staging),
-                    "-ov",
-                    "-format",
-                    "UDZO",
-                    str(dmg_path),
-                ]
-            )
+            run([
+                "hdiutil", "create",
+                "-volname", APP_NAME,
+                "-srcfolder", str(dmg_staging),
+                "-ov", "-format", "UDZO",
+                str(dmg_path),
+            ])
             print(f"설치 파일 생성: {dmg_path}")
         except Exception:
             print("DMG 생성에 실패했습니다. .app 번들은 정상 생성되었습니다.")
@@ -93,7 +131,6 @@ def package_output() -> None:
         print(f"설치용 zip 생성: {archive}.zip")
         return
 
-    # linux
     target = DIST_DIR / APP_NAME
     if not target.exists():
         raise RuntimeError(f"실행 폴더를 찾을 수 없습니다: {target}")
