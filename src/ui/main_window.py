@@ -20,11 +20,12 @@ class MainWindow(QMainWindow):
     def __init__(self, notifiers: list):
         super().__init__()
         self.notifiers = notifiers
-        self._return_btn = None
         self.setWindowTitle(M.APP_TITLE)
         self.setMinimumSize(1060, 720)
         self._build_ui()
         self._refresh_list()
+        self._return_btn = self._create_return_button()
+        self._return_btn.show()
 
     def _notify(self, event: str, context: dict) -> None:
         for n in self.notifiers:
@@ -379,19 +380,19 @@ class MainWindow(QMainWindow):
     def _on_minimize(self):
         self.setWindowState(Qt.WindowState.WindowNoState)
         self.hide()
-        self._show_return_button()
 
-    def _show_return_button(self):
-        if self._return_btn is None:
-            from src.ui.return_button import FloatingReturnButton
-            self._return_btn = FloatingReturnButton()
-            self._return_btn.restore_requested.connect(self.restore_window)
-        self._return_btn.show()
+    def _create_return_button(self):
+        from src.ui.return_button import FloatingReturnButton
+        btn = FloatingReturnButton()
+        btn.restore_requested.connect(self.restore_window)
+        return btn
 
     @Slot()
     def restore_window(self):
-        if self._return_btn is not None:
-            self._return_btn.hide()
+        # 자식 창(다이얼로그·서브 윈도우)이 하나라도 열려 있으면 동작하지 않음
+        for child in self.findChildren(QWidget):
+            if child.isWindow() and child.isVisible():
+                return
         self.show()
         self.raise_()
         self.activateWindow()
